@@ -137,6 +137,14 @@ button[aria-pressed="true"]{background:var(--ink);color:#141a18;border-color:tra
 #resExtra .ttl span{padding:4px 10px;border-radius:99px;background:var(--warn);color:#1b1b1b;font-size:13px;font-weight:800;}
 #resExtra .line{font-size:13px;font-weight:700;}
 #rankScr .card{max-height:calc(100dvh - 32px);overflow-y:auto;}
+#dressScr .card{background:var(--glass-2);border:1px solid var(--line);border-radius:18px;padding:18px;max-height:calc(100dvh - 32px);overflow-y:auto;}
+.dressGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.dressGrid button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border-radius:14px;text-align:left;min-height:64px;}
+.dressGrid button b{font-size:15px;}
+.dressGrid button small{font-size:11px;color:var(--ink-dim);font-weight:600;line-height:1.35;}
+.dressGrid button[aria-pressed="true"]{outline:2px solid var(--slime);background:rgba(143,227,192,.16);}
+.dressGrid button.locked{opacity:.5;}
+.dressGrid .sw{width:22px;height:22px;border-radius:50%;margin-bottom:2px;border:2px solid rgba(255,255,255,.3);}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;}
 .tabs button{padding:6px 12px;font-size:13px;}
 #rankList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;overflow-y:auto;max-height:46dvh;}
@@ -252,6 +260,7 @@ button[aria-pressed="true"]{background:var(--ink);color:#141a18;border-color:tra
       <p class="mission" id="missionTitle"></p>
       <div class="cta">
         <button class="big" id="btnStart">あそぶ</button>
+        <button id="btnDress">着せ替え</button>
         <button id="btnRank">ランキング</button>
         <button id="btnLang" translate="no"></button>
         <button id="btnBoard" hidden>ひとこと掲示板</button>
@@ -279,6 +288,16 @@ button[aria-pressed="true"]{background:var(--ink);color:#141a18;border-color:tra
         <button id="btnRank2">ランキング</button>
         <button id="btnRestart">色をリセットして最初から</button>
       </div>
+    </div>
+  </div>
+
+  <div class="screen" id="dressScr" hidden>
+    <div class="card">
+      <h2 style="margin:0">着せ替え</h2>
+      <p class="note" style="margin:0">かぶり物はネコにも見えるので、目立つほど見つかりやすくなる。おしゃれは命がけ！</p>
+      <div class="dressGrid" id="dressGrid"></div>
+      <p class="note" id="dressProg"></p>
+      <div class="cta"><button class="big" id="dressBack">もどる</button></div>
     </div>
   </div>
 
@@ -333,6 +352,11 @@ const EN = [
   ['近くに壁や家具の側面がない', 'No wall or furniture side nearby'], ['ぷにっとコピーで壁の模様を写せるよ', 'Use Puni copy to take the wall’s pattern'], ['壁ぎわ！「ぺたっ 張り付く」で壁にくっつける', 'By a wall! Tap “Stick to wall” to cling to it'],
   ['だまし成功！', 'Fooled it!'], ['動いたので目があいた', 'You moved, so your eyes opened'],
   ['スタート（音が出ないときはマナーモードと音量を確認）', 'started (no sound? check silent mode and volume)'], ['オン', 'ON'], ['オフ', 'OFF'],
+  ['着せ替え', 'Dress-up'], ['かぶり物はネコにも見えるので、目立つほど見つかりやすくなる。おしゃれは命がけ！', 'The cat can see what you wear too, so flashy gear gets you spotted. Fashion is dangerous!'],
+  ['つけている', 'Wearing'], ['タップでつける', 'Tap to wear'], ['まだつけられない：', 'Locked: '], ['をつけた！', ' on!'], ['あそんだ回数', 'Plays'], ['ミッション達成', 'Missions cleared'], ['回', 'x'],
+  ['新しい着せ替え：', 'New dress-up: '], [' をゲット！（タイトルの「着せ替え」から）', ' unlocked! (see “Dress-up” on the title screen)'],
+  ['なし', 'None'], ['リボン', 'Ribbon'], ['はっぱ', 'Leaf'], ['コック帽', 'Chef hat'], ['おはな', 'Flower'], ['おうかん', 'Crown'], ['ヘッドホン', 'Headphones'], ['天使の輪', 'Halo'], ['サングラス', 'Sunglasses'], ['ネコみみ', 'Cat ears'],
+  ['1回あそぶ', 'Play once'], ['3回あそぶ', 'Play 3 times'], ['5回あそぶ', 'Play 5 times'], ['10回あそぶ', 'Play 10 times'], ['今日のミッションを1回達成', 'Clear a daily mission'], ['ミッションを3回達成', 'Clear 3 missions'], ['3000点をとる', 'Score 3000'], ['Sランク（3800点）をとる', 'Get rank S (3800)'], ['ボスネコからにげきる', 'Escape the Boss cat'],
   // cats
   ['バランス型のしっかり者', 'Well-rounded and steady'], ['忍び足。飛びかかりが速い', 'Silent paws. Fast pounces'], ['くいしんぼ。鼻がよく利く', 'A foodie with a sharp nose'], ['でかい。パンチが広い。ドスン！', 'Huge. Wide swipes. STOMP!'],
   ['かくれんぼの時間だにゃ', 'Time for hide-and-seek, meow'], ['……（足音がしない）', '...... (no footsteps)'], ['おやつ…じゃなくてスライムのにおいにゃ', 'I smell snacks... I mean, slime, meow'], ['この家はワシのなわばりだにゃ', 'This place is MY turf, meow'],
@@ -1755,6 +1779,61 @@ function makeFace(){
   return face;
 }
 const face = makeFace(); slimeFrame.add(face);
+/* ---------------- dress-up: accessories (the cat can see them too) ---------------- */
+const ACC = {
+  none:   { name: 'なし', sw: 'transparent', cond: null },
+  ribbon: { name: 'リボン', sw: '#f06292', cond: ['plays', 1, '1回あそぶ'] },
+  leaf:   { name: 'はっぱ', sw: '#5aa33c', cond: ['plays', 3, '3回あそぶ'] },
+  chef:   { name: 'コック帽', sw: '#ffffff', cond: ['plays', 5, '5回あそぶ'] },
+  flower: { name: 'おはな', sw: '#ffd54f', cond: ['missions', 1, '今日のミッションを1回達成'] },
+  crown:  { name: 'おうかん', sw: '#f2b134', cond: ['best', 3000, '3000点をとる'] },
+  phones: { name: 'ヘッドホン', sw: '#3a3d42', cond: ['plays', 10, '10回あそぶ'] },
+  halo:   { name: '天使の輪', sw: '#fff59d', cond: ['missions', 3, 'ミッションを3回達成'] },
+  shades: { name: 'サングラス', sw: '#111111', cond: ['best', 3800, 'Sランク（3800点）をとる'] },
+  ears:   { name: 'ネコみみ', sw: '#b07a4a', cond: ['boss', 1, 'ボスネコからにげきる'] },
+};
+const ACC_ORDER = Object.keys(ACC);
+const prog = Object.assign({ plays: 0, best: 0, missions: 0, boss: 0 }, (() => { try { return JSON.parse(localStorage.getItem('puni_prog') || '{}'); } catch (e) { return {}; } })());
+const saveProg = () => { try { localStorage.setItem('puni_prog', JSON.stringify(prog)); } catch (e) {} };
+const accUnlocked = id => { const c = ACC[id].cond; return !c || prog[c[0]] >= c[1]; };
+let accId = (() => { try { return localStorage.getItem('puni_acc') || 'none'; } catch (e) { return 'none'; } })();
+if (!ACC[accId] || !accUnlocked(accId)) accId = 'none';
+const accRoot = new THREE.Group(); slimeFrame.add(accRoot);
+const accFace = new THREE.Group(); slimeFrame.add(accFace);
+function accMesh(geo, color, o = {}){ const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial(Object.assign({ color, roughness: .45 }, o))); m.castShadow = true; m.layers.enable(1); return m; }
+function buildAcc(id){
+  for (const g of [accRoot, accFace]) while (g.children.length) g.remove(g.children[0]);
+  const T3 = THREE;
+  switch (id){
+    case 'ribbon': { const a = accMesh(new T3.ConeGeometry(.022, .045, 12), '#f06292'); a.rotation.z = Math.PI / 2; a.position.set(-.024, .008, 0); const b = a.clone(); b.rotation.z = -Math.PI / 2; b.position.x = .024; const c = accMesh(new T3.SphereGeometry(.012, 12, 8), '#e91e63'); c.position.y = .008; accRoot.add(a, b, c); break; }
+    case 'leaf': { const l = accMesh(new T3.SphereGeometry(.03, 14, 8), '#5aa33c'); l.scale.set(1, .25, .55); l.position.set(.012, .03, 0); l.rotation.z = -.5; const st = accMesh(new T3.CylinderGeometry(.003, .003, .03, 6), '#4a6b2a'); st.position.y = .015; accRoot.add(l, st); break; }
+    case 'chef': { const b = accMesh(new T3.CylinderGeometry(.03, .032, .04, 20), '#ffffff'); b.position.y = .02; const t = accMesh(new T3.SphereGeometry(.042, 18, 12), '#ffffff'); t.scale.y = .7; t.position.y = .055; accRoot.add(b, t); break; }
+    case 'flower': { for (let i = 0; i < 5; i++){ const a = i / 5 * TAU; const p = accMesh(new T3.SphereGeometry(.013, 10, 8), '#f8bbd0'); p.scale.set(1, .4, 1); p.position.set(Math.cos(a) * .016, .006, Math.sin(a) * .016); accRoot.add(p); } const c = accMesh(new T3.SphereGeometry(.01, 10, 8), '#ffd54f'); c.position.y = .01; accRoot.add(c); accRoot.children.forEach(m => m.position.x += .025); break; }
+    case 'crown': { const r = accMesh(new T3.CylinderGeometry(.028, .028, .02, 20, 1, true), '#f2b134', { metalness: .3, roughness: .3, emissive: '#7a5200', emissiveIntensity: .5, side: T3.DoubleSide }); r.position.y = .01; accRoot.add(r); for (let i = 0; i < 5; i++){ const a = i / 5 * TAU; const k = accMesh(new T3.ConeGeometry(.007, .018, 6), '#f2b134', { metalness: .3, roughness: .3, emissive: '#7a5200', emissiveIntensity: .5 }); k.position.set(Math.cos(a) * .028, .028, Math.sin(a) * .028); accRoot.add(k); const g = accMesh(new T3.SphereGeometry(.004, 6, 4), '#e53950'); g.position.set(Math.cos(a) * .029, .012, Math.sin(a) * .029); accRoot.add(g); } break; }
+    case 'phones': { const band = accMesh(new T3.TorusGeometry(.05, .005, 8, 24, Math.PI), '#3a3d42'); band.position.y = -.02; accRoot.add(band); for (const sx of [-1, 1]){ const cup = accMesh(new T3.CylinderGeometry(.016, .016, .012, 16), '#e8453c'); cup.rotation.z = Math.PI / 2; cup.position.set(sx * .05, -.02, 0); accRoot.add(cup); } break; }
+    case 'halo': { const h = accMesh(new T3.TorusGeometry(.03, .004, 8, 28), '#fff59d', { emissive: '#ffe082', emissiveIntensity: .9 }); h.rotation.x = Math.PI / 2; h.position.y = .04; accRoot.add(h); break; }
+    case 'ears': { for (const sx of [-1, 1]){ const e = accMesh(new T3.ConeGeometry(.018, .035, 4), '#b07a4a'); e.position.set(sx * .03, .012, 0); e.rotation.z = -sx * .25; const inn = accMesh(new T3.ConeGeometry(.01, .022, 4), '#f29aa6'); inn.position.set(sx * .03, .01, .006); inn.rotation.z = -sx * .25; accRoot.add(e, inn); } break; }
+    case 'shades': { for (const sx of [-1, 1]){ const g = accMesh(new T3.BoxGeometry(.026, .016, .004), '#111111', { roughness: .1, metalness: .4 }); g.position.set(sx * .017, 0, 0); accFace.add(g); } const br = accMesh(new T3.BoxGeometry(.012, .003, .003), '#111111'); accFace.add(br); break; }
+  }
+}
+function setAcc(id){ accId = id; try { localStorage.setItem('puni_acc', id); } catch (e) {} buildAcc(id); }
+buildAcc(accId);
+function updAcc(d, j, f){
+  const hh = d.h * (1 + j);
+  accRoot.position.set(0, hh * .97, 0); accRoot.scale.setScalar(clamp(.8 + .3 * d.sxz, .8, 1.35));
+  const e0 = face.userData.eyes[0].position, e1 = face.userData.eyes[1].position;
+  accFace.position.set((e0.x + e1.x) / 2, (e0.y + e1.y) / 2 + .002, (e0.z + e1.z) / 2 + .006);
+  accFace.rotation.copy(face.userData.eyes[1].rotation); accFace.rotation.y = 0;
+  accFace.scale.setScalar(clamp(.7 + .35 * d.sxz, .75, 1.3));
+  accFace.visible = !player.eyesClosed;
+  accRoot.rotation.y = 0;
+}
+function renderDress(){
+  $('#dressGrid').innerHTML = ACC_ORDER.map(id => { const a = ACC[id], ok = accUnlocked(id); return `<button data-acc="${id}" aria-pressed="${id === accId}" class="${ok ? '' : 'locked'}"><span class="sw" style="background:${a.sw}"></span><b>${a.name}</b><small>${ok ? (id === accId ? 'つけている' : 'タップでつける') : '🔒 ' + a.cond[2]}</small></button>`; }).join('');
+  $('#dressGrid').querySelectorAll('button').forEach(b => b.onclick = () => { const id = b.dataset.acc; if (!accUnlocked(id)){ toast('まだつけられない：' + ACC[id].cond[2], 'bad'); return; } setAcc(id); renderDress(); toast(ACC[id].name + 'をつけた！', 'cool'); });
+  $('#dressProg').textContent = `あそんだ回数 ${prog.plays}　自己ベスト ${prog.best}点　ミッション達成 ${prog.missions}回`;
+}
+
 face.traverse(o => { if (o.isMesh) o.layers.enable(1); });
 
 const player = { pos: new THREE.Vector3(.4, 0, 1.6), vy: 0, grounded: true, yaw: 0, s: 0, sCur: 0, jig: 0, jigV: 0, hop: 0, hopSq: 0, stuck: null, eyesClosed: false, decoys: 2, moving: false };
@@ -1795,6 +1874,7 @@ function updSlime(dt, time){
     g.rotation.set(-(1 - f) * Math.PI / 2, sx * .18 * f, 0);
     g.scale.setScalar(esc);
   }
+  updAcc(d, j, f);
   SU.uTime.value = time; SU.uWob.value = clamp(.0015 + Math.abs(player.jigV) * .0005, 0, .006);
 }
 
@@ -2257,7 +2337,7 @@ function setHUD(s){
   $('#btnReady').hidden = s !== 'hide';
   ui.susp.hidden = s !== 'hunt'; ui.pip.hidden = s !== 'hunt'; ui.taunt.hidden = s !== 'hunt';
   ui.phase.textContent = s === 'hunt' ? 'にげきれ' : 'かくれる'; ui.phase.classList.toggle('hunt', s === 'hunt');
-  $('#title').hidden = s !== 'title'; $('#rankScr').hidden = true; $('#result').hidden = s !== 'result';
+  $('#title').hidden = s !== 'title'; $('#rankScr').hidden = true; $('#dressScr').hidden = true; $('#result').hidden = s !== 'result';
   $('#blind').hidden = !(inGame && player.eyesClosed);
   if (!inGame){ ui.bubble.hidden = true; ui.warn.hidden = true; }
 }
@@ -2324,9 +2404,13 @@ function showResult(){
   const rec = { s: total, d: jstDate(), t: titles.join('・'), b: catBreed, st: curStage, at: Date.now(), rank, caught: game.caught, mission };
   lastResult = rec;
   const best = saveLocal(rec);
+  const before = ACC_ORDER.filter(accUnlocked);
+  prog.plays++; prog.best = Math.max(prog.best, total); if (mission && LS.get('puni_mission', '') !== tm.date) prog.missions++; if (!game.caught && catBreed === 'boss') prog.boss = 1; saveProg();
+  const newAcc = ACC_ORDER.filter(id => accUnlocked(id) && !before.includes(id));
   if (mission){ LS.set('puni_mission', tm.date); renderMission(); }
   $('#resExtra').innerHTML = `<div class="ttl">${titles.map(t => `<span>${t}</span>`).join('')}</div>` +
     `<div class="line">${best ? '自己ベスト更新！' : `自己ベスト ${LS.get('puni_rank', [{ s: total }])[0].s}点`}${mission ? '　今日のミッション達成！ +500' : `　今日のミッション：${MISSIONS[tm.i].t}`}</div>` +
+    (newAcc.length ? `<div class="line" style="color:var(--slime)">新しい着せ替え：${newAcc.map(id => ACC[id].name).join('・')} をゲット！（タイトルの「着せ替え」から）</div>` : '') +
     (api.on ? `<div class="line" id="resNet">${myName() ? '送信中…' : '「ランキング」でなまえを入れると、みんなのランキングに登録されます'}</div>` : '');
   submitScore(rec);
   const img = $('#shot');
@@ -2834,6 +2918,8 @@ async function showTab(tab){
   } catch (e){ list.innerHTML = '<li>読みこめませんでした。時間をおいてもう一度。</li>'; }
 }
 $('#btnRank').onclick = () => openRank('mine');
+$('#btnDress').onclick = () => { renderDress(); $('#title').hidden = true; $('#dressScr').hidden = false; };
+$('#dressBack').onclick = () => { $('#dressScr').hidden = true; $('#title').hidden = false; };
 $('#btnRank2').onclick = () => openRank(api.on ? 'week' : 'mine');
 $('#btnBoard').onclick = () => openRank('board');
 $('#rankBack').onclick = () => { $('#rankScr').hidden = true; $('#' + rankPrev).hidden = false; };
