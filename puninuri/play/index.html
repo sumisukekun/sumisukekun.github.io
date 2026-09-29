@@ -54,7 +54,8 @@ button[aria-pressed="true"]{background:var(--ink);color:#141a18;border-color:tra
 #blind{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(28,12,16,.74) 0%,rgba(10,4,6,.93) 72%);display:grid;place-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 #senseGlow{position:absolute;inset:0;}
 #blind{background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;place-items:start center!important;padding-top:calc(env(safe-area-inset-top) + 64px);}
-#blind > div:not(#senseGlow){background:rgba(14,20,18,.72);border-radius:18px;padding:8px 16px 10px;position:relative;}
+#blind > div:not(#senseGlow){background:rgba(14,20,18,.72);border-radius:16px;padding:6px 14px 8px;position:absolute;left:50%;top:44%;transform:translateX(-50%);max-width:min(86vw,420px);text-align:center;}
+@media (max-width:700px){ #blind small{display:none!important;} #blind #sense .bar{width:120px!important;} }
 #blind p{font-size:16px!important;}
 #blind #sense{margin-top:4px;gap:4px;}
 #senseTxt{font-size:18px!important;}
@@ -2777,10 +2778,22 @@ function updCamera(){
   camRay.set(camTarget, dir); camRay.far = d + .1;
   const ch = camRay.intersectObjects(camBlockers, false)[0];
   if (ch) d = Math.max(.12, ch.distance - .06);
+  // peek view: when the camera would end up inside/behind a wall (e.g. stuck to a wall and turned to face the room),
+  // look out from the slime's own position instead, so the whole room stays visible.
+  const intoWall = player.stuck && dir.x * player.stuck.n.x + dir.z * player.stuck.n.z < .15;
+  if (!paint.on && (intoWall || (ch && d < .3))){
+    const out = player.stuck ? _v3.set(player.stuck.n.x, 0, player.stuck.n.z).normalize() : _v3.set(-dir.x, 0, -dir.z).normalize();
+    camera.position.copy(camTarget).addScaledVector(out, .16); camera.position.y += .06;
+    if (camera.position.y < .05) camera.position.y = .05;
+    camera.lookAt(camera.position.x - dir.x * 3, camera.position.y - dir.y * 3, camera.position.z - dir.z * 3);
+    peekOn = true; return;
+  }
+  peekOn = false;
   camera.position.copy(camTarget).addScaledVector(dir, d);
   if (camera.position.y < .03) camera.position.y = .03;
   camera.lookAt(camTarget);
 }
+let peekOn = false;
 
 /* ---------------- eyes-closed sense ---------------- */
 let senseBeat = 0;
@@ -3008,7 +3021,7 @@ function drawMini(){
     if (mini.big){ g.fillStyle = '#fff'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(tr('ネコ'), cx, cz - 11); }
   }
   // you (arrow = where the camera looks)
-  const px = tx(player.pos.x), pz = tz(player.pos.z), cy = cam.yaw, fx = -Math.sin(cy), fz = -Math.cos(cy);
+  const px = tx(player.pos.x), pz = tz(player.pos.z), cy = cam.yaw + (peekOn ? Math.PI : 0), fx = -Math.sin(cy), fz = -Math.cos(cy);
   g.save(); g.translate(px, pz); g.scale(k, k); g.rotate(Math.atan2(fz, fx) + Math.PI / 2);
   g.fillStyle = '#8FE3C0'; g.strokeStyle = '#0d2a20'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -8); g.lineTo(6, 5); g.lineTo(0, 2.5); g.lineTo(-6, 5); g.closePath(); g.fill(); g.stroke(); g.restore();
   if (mini.big){ g.fillStyle = '#fff'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(tr('じぶん'), px, pz + 13); }
