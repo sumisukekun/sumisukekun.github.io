@@ -126,6 +126,16 @@ button[aria-pressed="true"]{background:var(--ink);color:#141a18;border-color:tra
 .steps li b{display:block;}
 .steps .n{font-family:var(--display);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--slime);color:#0d2a20;font-size:14px;font-style:normal;}
 .steps span{color:var(--ink-dim);}
+/* keep the logo reachable: bottom-aligned when it fits, scrollable from the top when it doesn't */
+.screen{align-items:flex-start!important;}
+.screen > .card{margin-top:auto;}
+@media (pointer:coarse){ .keys .pcKeys{display:none;} }
+@media (max-height:900px){
+  #title .logo{font-size:clamp(48px,13vw,84px);}
+  #title .steps span{display:none;}
+  #title .steps li{font-size:14px;align-items:center;}
+  #title .card{gap:10px;}
+}
 .cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .big{font-size:18px;padding:14px 28px;border-radius:14px;background:var(--cat);color:#fff;border-color:transparent;}
 .keys{font-size:12px;color:var(--ink-dim);line-height:1.6;}
@@ -265,7 +275,7 @@ button[aria-pressed="true"]{background:var(--ink);color:#141a18;border-color:tra
         <button id="btnLang" translate="no"></button>
         <button id="btnBoard" hidden>ひとこと掲示板</button>
         <button class="bgmBtn" aria-pressed="true">♪ BGM オン</button>
-        <div class="keys">PC：WASD移動・スペースでジャンプ・Cでコピー・Xで張り付く・Zで目をつむる・Vで分身・Tで鳴く・Q/Eで形<br>スマホ：左スティックで移動・画面スワイプで視点・下のバーで形</div>
+        <div class="keys"><span class="pcKeys">PC：WASD移動・スペースでジャンプ・Cでコピー・Xで張り付く・Zで目をつむる・Vで分身・Tで鳴く・Q/Eで形<br></span>スマホ：左スティックで移動・画面スワイプで視点・下のバーで形</div>
       </div>
     </div>
   </div>
