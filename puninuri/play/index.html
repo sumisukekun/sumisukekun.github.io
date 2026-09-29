@@ -317,7 +317,7 @@ button[aria-pressed="true"]{background:var(--ink);color:#141a18;border-color:tra
       <h2 id="rankHead" style="margin:0">ランキング</h2>
       <div class="tabs" id="rankTabs"></div>
       <ol id="rankList"></ol>
-      <div class="nameRow" id="nameRow"><span class="note">なまえ</span><input id="nameIn" maxlength="10" placeholder="ランキングに出る名前"></div>
+      <div class="nameRow" id="nameRow"><span class="note">なまえ</span><input id="nameIn" maxlength="10" placeholder="ランキングに出る名前" enterkeyhint="done"><button id="nameOk">決定</button></div>
       <div class="boardForm" id="boardForm" hidden><input id="boardIn" maxlength="40" placeholder="ひとこと（40文字まで）"><button id="boardSend">書きこむ</button></div>
       <p class="note" id="rankNote"></p>
       <div class="cta"><button class="big" id="rankBack">もどる</button></div>
@@ -343,7 +343,7 @@ const EN = [
   ['：WASD移動・スペースでジャンプ・Cでコピー・Xで張り付く・Zで目をつむる・Vで分身・Tで鳴く・Q/Eで形', ': WASD move · Space jump · C copy · X stick · Z close eyes · V decoy · T squeak · Q/E shape'],
   ['スマホ：左スティックで移動・画面スワイプで視点・下のバーで形', 'Phone: left stick to move · swipe to look · bottom bar for shape'],
   ['にげきった！', 'You escaped!'], ['ネコの視界のベストシーン', 'Best shot from the cat’s eyes'], ['もう一回', 'Play again'], ['結果をコピー', 'Copy result'], ['色をリセットして最初から', 'Reset color and restart'],
-  ['ランキングに出る名前', 'Name for the ranking'], ['ひとこと（40文字まで）', 'Say something (max 40)'], ['書きこむ', 'Post'], ['なまえ', 'Name'], ['もどる', 'Back'],
+  ['ランキングに出る名前', 'Name for the ranking'], ['決定', 'OK'], ['なまえを「', 'Name set to “'], ['」にしたよ', '”'], ['なまえを消したよ', 'Name cleared'], ['ひとこと（40文字まで）', 'Say something (max 40)'], ['書きこむ', 'Post'], ['なまえ', 'Name'], ['もどる', 'Back'],
   ['全体地図（タップで大きく）', 'Map (tap to enlarge)'], ['移動スティック', 'Move stick'], ['かたち（ぺちゃんこ〜にょーん）', 'Shape (flat to tall)'],
   ['目をつむり中', 'Eyes closed'], ['耳がよくなって、壁の向こうの足音が見える（動くと目があく）', 'Your ears sharpen: footsteps show the cat through walls (moving opens your eyes)'],
   ['足音でネコの姿が壁ごしに光る（動くと目があく）', 'Footsteps make the cat glow through walls (moving opens your eyes)'],
@@ -2946,7 +2946,14 @@ $('#dressBack').onclick = () => { $('#dressScr').hidden = true; $('#title').hidd
 $('#btnRank2').onclick = () => openRank(api.on ? 'week' : 'mine');
 $('#btnBoard').onclick = () => openRank('board');
 $('#rankBack').onclick = () => { $('#rankScr').hidden = true; $('#' + rankPrev).hidden = false; };
-$('#nameIn').onchange = () => { LS.set('puni_name', $('#nameIn').value.trim().slice(0, 10)); if (lastResult && !lastResult.sent) submitScore(lastResult); };
+function saveName(showToast){
+  const v = $('#nameIn').value.trim().slice(0, 10); LS.set('puni_name', v); $('#nameIn').blur();
+  if (showToast) toast(v ? `なまえを「${v}」にしたよ` : 'なまえを消したよ', 'cool');
+  if (lastResult && !lastResult.sent) submitScore(lastResult);
+}
+$('#nameIn').onchange = () => saveName(false);
+$('#nameIn').onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); saveName(true); } };
+$('#nameOk').onclick = () => saveName(true);
 $('#boardSend').onclick = async () => {
   const text = $('#boardIn').value.trim(); if (!text) return;
   if (!myName()){ toast('先になまえを入れてね', 'bad'); $('#nameIn').focus(); return; }
@@ -2959,7 +2966,7 @@ async function submitScore(rec){
 function shareText(){
   if (!lastResult) return '';
   if (LANG !== 'ja') return `I scored ${lastResult.s} pts (rank ${lastResult.rank}) in PuniNuri! ${lastResult.caught ? '...and got caught' : 'and escaped!'}\nTitles: ${tr(lastResult.t)}\nCat: ${tr((BREEDS[lastResult.b] || {}).name || '')} · Stage: ${tr((STAGES[lastResult.st] || {}).name || '')}${lastResult.mission ? '\nDaily mission cleared!' : ''}\n#PuniNuri`;
-  return `ぷにヌリ！で${lastResult.s}点（ランク${lastResult.rank}）${lastResult.caught ? '…つかまった' : 'にげきった！'}\n称号：${lastResult.t}\nネコ：${(BREEDS[lastResult.b] || {}).name || ''}${lastResult.mission ? '\n今日のミッション達成！' : ''}\n#ぷにヌリ`;
+  return `${myName() ? myName() + 'が' : ''}ぷにヌリ！で${lastResult.s}点（ランク${lastResult.rank}）${lastResult.caught ? '…つかまった' : 'にげきった！'}\n称号：${lastResult.t}\nネコ：${(BREEDS[lastResult.b] || {}).name || ''}${lastResult.mission ? '\n今日のミッション達成！' : ''}\n#ぷにヌリ`;
 }
 $('#btnShare').onclick = async () => {
   const t = shareText();
